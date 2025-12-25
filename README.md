@@ -32,7 +32,7 @@ If you want to modify the code or run the tutorials:
 
 ```bash
 # 1. Clone the repository
-git clone [https://github.com/mehmetaliyucel/stats-for-mols.git](https://github.com/mehmetaliyucel/stats-for-mols.git)
+git clone https://github.com/mehmetaliyucel/stats-for-mols.git
 cd stats-for-mols
 
 # 2. Install in editable mode with uv
@@ -42,10 +42,9 @@ uv pip install -e .
 
 If you just want to use the package in another project:
 ```bash
-uv pip install git+[https://github.com/mehmetaliyucel/stats-for-mols.git](https://github.com/mehmetaliyucel/stats-for-mols.git)
+uv pip install https://github.com/mehmetaliyucel/stats-for-mols.git
 ```
 📄 Reference
 
 If you use this package in your research, please cite the original paper:
-
     [Ash, J. R., Wognum, C., et al. "Practically Significant Method Comparison Protocols for Machine Learning in Small Molecule Drug Discovery." Journal of Chemical Information and Modeling (2025)](https://pubs.acs.org/doi/10.1021/acs.jcim.5c01609)
