@@ -32,17 +32,17 @@ If you want to modify the code or run the tutorials:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/mehmetaliyucel/stats-for-mols.git
+git clone [https://github.com/mehmetaliyucel/stats-for-mols.git](https://github.com/mehmetaliyucel/stats-for-mols.git)
 cd stats-for-mols
-```
+
 # 2. Install in editable mode with uv
 uv pip install -e .
-
+```
 ### Option 2: Install as a Library
 
 If you just want to use the package in another project:
 ```bash
-uv pip install https://github.com/mehmetaliyucel/stats-for-mols.git
+uv pip install git+[https://github.com/mehmetaliyucel/stats-for-mols.git](https://github.com/mehmetaliyucel/stats-for-mols.git)
 ```
 📄 Reference
 
