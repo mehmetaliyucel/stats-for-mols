@@ -1,0 +1,20 @@
+[project]
+name = "stats-for-mols"
+version = "0.1.0"
+description = "The guidelines from the paper were followed"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "matplotlib>=3.9.4",
+    "numpy>=2.0.2",
+    "pandas>=2.3.3",
+    "pingouin>=0.5.5",
+    "scikit-learn>=1.6.1",
+    "scikit-posthocs>=0.11.4",
+    "seaborn>=0.13.2",
+    "umap-learn>=0.5.9.post2",
+]
+[project.urls]
+Homepage = "https://github.com/mehmetaliyucel/stats-for-mols"
+Repository = "https://github.com/mehmetaliyucel/stats-for-mols"
+Issues = "https://github.com/mehmetaliyucel/stats-for-mols/issues"
