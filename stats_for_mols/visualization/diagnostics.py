@@ -60,7 +60,7 @@ def plot_descriptor_overlap(data, descriptor_cols, splitter, n_folds_to_plot=5):
             if i == 0: ax.legend() # Only add legend to first column
     plt.tight_layout()
     return fig
-def plot_pca_chemical_space(data, descriptor_cols, splitter, n_folds_to_plot=1):
+def plot_pca_chemical_space(data, descriptor_cols, splitter, n_folds_to_plot=5):
     """
     Plots PCA of chemical space for Train vs Test sets across folds.
     """
@@ -110,7 +110,7 @@ def plot_multiclass_target_distribution(data, target_col, splitter, n_folds_to_p
         
         df_train = data.iloc[train_idx][[target_col]].copy()
         df_test = data.iloc[test_idx][[target_col]].copy()
-        df-train['Set'] = 'Train'
+        df_train['Set'] = 'Train'
         df_test['Set'] = 'Test'
         df_combined = pd.concat([df_train, df_test])
 
