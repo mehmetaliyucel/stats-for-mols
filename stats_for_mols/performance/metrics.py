@@ -4,7 +4,7 @@ from scipy.stats import pearsonr, spearmanr, kendalltau
 from sklearn.metrics import (
     mean_absolute_error, mean_squared_error, r2_score,
     matthews_corrcoef, cohen_kappa_score, roc_auc_score,
-    average_precision_score, precision_score, recall_score
+    average_precision_score, precision_score, recall_score, f1_score, accuracy_score
 )
 
 class MetricCalculator:
@@ -72,37 +72,70 @@ class MetricCalculator:
         """
         Calculates classification metrics including Enrichment Factors and Recall@k.
         """
+        if y_proba.ndim  == 2 and y_proba.shape[1] > 1:
+            return  MetricCalculator._get_multiclass_metrics(y_true, y_proba)
+        else:
+            return MetricCalculator._get_binary_metrics(y_true, y_proba, threshold)
+    @staticmethod
+    def _get_binary_metrics(y_true, y_proba, threshold):
+        '''
+        Binary classification metrics.
+        
+        '''
+        metrics = {}
+        if y_proba.ndim ==2:
+            y_proba = y_proba[:, 1] if y_proba.shape[1] ==2 else y_proba.ravel()
         y_pred = (y_proba >= threshold).astype(int)
-        
-        # Temel Metrikler
-        mcc = matthews_corrcoef(y_true, y_pred)
-        kappa = cohen_kappa_score(y_true, y_pred)
-        roc_auc = roc_auc_score(y_true, y_proba)
-        pr_auc = average_precision_score(y_true, y_proba)
-        
-        # Imbalance-Aware Metrics
-        prevalence = np.mean(y_true)
-        precision = precision_score(y_true, y_pred, zero_division=0)
-        enrichment = precision / prevalence if prevalence > 0 else 0.0
-        enrichment_at_1= MetricCalculator._enrichment_at_k(y_true, y_proba, k_percent=1)
-        enrichment_at_5= MetricCalculator._enrichment_at_k(y_true, y_proba, k_percent=5)
-        results = {
-            "MCC": mcc,
-            "Kappa": kappa,
-            "ROC_AUC": roc_auc,
-            "PR_AUC": pr_auc,
-            "Precision": precision,
-            "Recall": recall_score(y_true, y_pred),
-            "Enrichment_Factor": enrichment,
-            "Enrichment_at_1%": enrichment_at_1,
-            "Enrichment_at_5%": enrichment_at_5
-        }
-        
-        # Decision Metrics (Recall@Precision & TNR@Recall)
-        results.update(MetricCalculator._recall_at_precision(y_true, y_proba, target_precision=0.90))
-        results.update(MetricCalculator._tnr_at_recall(y_true, y_proba, target_recall=0.90))
-        
-        return results
+        try:
+            metrics['MCC'] = matthews_corrcoef(y_true, y_pred)
+            metrics['Accuracy'] = accuracy_score(y_true, y_pred)
+            metrics['Kappa'] = cohen_kappa_score(y_true, y_pred)
+            metrics['F1_Score'] = f1_score(y_true, y_pred)
+            metrics['ROC_AUC'] = roc_auc_score(y_true, y_proba)
+            metrics['PR_AUC'] = average_precision_score(y_true, y_proba)
+            metrics['Precision'] = precision_score(y_true, y_pred, zero_division=0)
+            metrics['Recall'] = recall_score(y_true, y_pred)
+            prevalence = np.mean(y_true)
+            precision = precision_score(y_true, y_pred, zero_division=0)
+            enrichment = precision / prevalence if prevalence > 0 else 0.0
+            enrichment_at_1= MetricCalculator._enrichment_at_k(y_true, y_proba, k_percent=1)
+            enrichment_at_5= MetricCalculator._enrichment_at_k(y_true, y_proba, k_percent=5)
+            metrics['Enrichment_Factor'] = enrichment
+            metrics['Enrichment@1%'] = enrichment_at_1
+            metrics['Enrichment@5%'] = enrichment_at_5
+            metrics['Recall@90%Prec'] = MetricCalculator._recall_at_precision(y_true, y_proba, target_precision=0.90)[f"Recall@90Prec"]
+            metrics['TNR@90%Recall'] = MetricCalculator._tnr_at_recall(y_true, y_proba, target_recall=0.90)[f"TNR@90Recall"]
+
+        except ValueError as e:
+            print(f"Warning: Metric calculation failed with error: {e}")
+                  
+        return metrics
+    @staticmethod
+    def _get_multiclass_metrics(y_true, y_proba):
+        '''
+        Multiclass classification metrics,
+        '''
+        metrics = {}
+        n_classes = y_proba.shape[1]
+        y_pred = np.argmax(y_proba, axis=1)
+        try:
+            metrics['MCC'] = matthews_corrcoef(y_true, y_pred)
+            metrics['Accuracy'] = accuracy_score(y_true, y_pred)
+            metrics['Kappa'] = cohen_kappa_score(y_true, y_pred)
+            metrics['F1_Score_Macro'] = f1_score(y_true, y_pred, average='macro', zero_division=0)
+            metrics['F1_Score_Weighted'] = f1_score(y_true, y_pred, average='weighted', zero_division=0)
+            metrics['Precision_Macro'] = precision_score(y_true, y_pred, average='macro', zero_division=0)
+            metrics['Recall_Macro'] = recall_score(y_true, y_pred, average='macro')
+            metrics['Presicion_Weighted'] = precision_score(y_true, y_pred, average='weighted', zero_division=0)
+            metrics['Recall_Weighted'] = recall_score(y_true, y_pred, average='weighted')
+            metrics['ROC_AUC_Macro'] = roc_auc_score(y_true, y_proba, multi_class='ovo', average='macro')
+            metrics['ROC_AUC_Weighted'] = roc_auc_score(y_true, y_proba, multi_class='ovo', average='weighted')
+            metrics['PR_AUC_Macro'] = average_precision_score(y_true, y_proba, average='macro')
+            metrics['PR_AUC_Weighted'] = average_precision_score(y_true, y_proba, average='weighted')
+        except:
+            print("Warning: Multiclass metric calculation failed.")
+        return metrics
+
     @staticmethod
     def _enrichment_at_k(y_true, y_prob, k_percent=1):
         if k_percent <= 0:
