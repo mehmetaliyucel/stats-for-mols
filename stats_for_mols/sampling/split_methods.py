@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.model_selection import (RepeatedKFold, RepeatedStratifiedKFold,
-                                     ShuffleSplit, StratifiedShuffleSplit)
+                                     ShuffleSplit, StratifiedShuffleSplit, StratifiedKFold, KFold)
 from sklearn.utils import check_random_state
 from .strategy_selector import SamplingStrategySelector
 from .splitting_strategies import ScaffoldRepeatedKFold, SplitStrategy, ButinaClusterKFold, UMAPRepeatedKFold
@@ -51,8 +51,48 @@ class DataSplitter:
                                     test_size=0.2,
                                     random_state=self.random_state)
                 return cv.split(self.data, self.target)
-            else:
-                raise ValueError(f"Unknown method_name: {method_name}")
+            elif method_name == 'nested_cv':
+                if self.task_type == "classification":
+                    outer_cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=self.random_state)
+                    inner_cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=self.random_state)
+
+                    for train_val_idx, test_idx in outer_cv.split(self.data, self.target):
+                        train_val_data = self.data.iloc[train_val_idx]
+                        train_val_target = self.target[train_val_idx]
+
+
+                    for train_idx, val_idx in inner_cv.split(train_val_data, train_val_target):
+                        yield (train_val_idx[train_idx], train_val_idx[val_idx], test_idx)
+                else:
+                    outer_cv = KFold(n_splits=n_splits, shuffle=True, random_state=self.random_state)
+                    inner_cv = KFold(n_splits=n_splits, shuffle=True, random_state=self.random_state)
+                    
+                    for train_val_idx, test_idx in outer_cv.split(self.data):
+                        train_val_data = self.data.iloc[train_val_idx]
+
+
+                    for train_idx, val_idx in inner_cv.split(train_val_data):
+                        yield (train_val_idx[train_idx], train_val_idx[val_idx], test_idx)
+            elif method_name == 'light_nested_cv':
+                if self.task_type ==  "classification":
+                    train_test = RepeatedStratifiedKFold(n_splits=n_splits,
+                                                  n_repeats=n_repeats,
+                                                  random_state=self.random_state)
+                    
+
+                    single = StratifiedShuffleSplit(n_splits=1, shuffle=True, random_state=self.random_state)
+
+                for train_idx, test_idx in train_test.split(self.data, self.target):
+                    for train_idx_inner, val_idx_inner in single.split(self.data.iloc[train_idx], self.target[train_idx]):
+                        yield (train_idx[train_idx_inner], train_idx[val_idx_inner], test_idx)
+                else:
+                    train_test = RepeatedKFold(n_splits=n_splits,
+                                            n_repeats=n_repeats,
+                                            random_state=self.random_state)
+                    single = ShuffleSplit(n_splits=1, shuffle=True, random_state=self.random_state)
+                    for train_idx, test_idx in train_test.split(self.data):
+                        for train_idx_inner, val_idx_inner in single.split(self.data.iloc[train_idx]):
+                            yield (train_idx[train_idx_inner], train_idx[val_idx_inner], test_idx)
         elif self.split_type == 'scaffold':
             if method_name == 'repeated_cv':
                 splitter = ScaffoldRepeatedKFold(n_splits=n_splits,
