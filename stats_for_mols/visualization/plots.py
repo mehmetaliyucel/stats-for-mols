@@ -49,7 +49,7 @@ def plot_simultaneous_ci(pairwise_df, metric_name="Score", higher_is_better=Fals
             if not row_b.empty:
                 model_means[m] = row_b.iloc[0]['mean(B)']
             else:
-                model_means[m] = -np.inf if higher_is_better else np.inf # Veri yoksa saf dışı bırak
+                model_means[m] = -np.inf if higher_is_better else np.inf # if there's no data
 
     # En iyi modeli seç
     if not model_means:
@@ -68,7 +68,6 @@ def plot_simultaneous_ci(pairwise_df, metric_name="Score", higher_is_better=Fals
         if m == best_model:
             continue
             
-        # Best vs M satırını bul (Sırası A-B veya B-A olabilir)
         row = pairwise_df[((pairwise_df['A'] == best_model) & (pairwise_df['B'] == m)) | 
                           ((pairwise_df['A'] == m) & (pairwise_df['B'] == best_model))]
         
@@ -77,28 +76,28 @@ def plot_simultaneous_ci(pairwise_df, metric_name="Score", higher_is_better=Fals
             
         row = row.iloc[0]
         
-        # Fark ve P-değeri
+        # Difference and P-value
         diff = row['diff']
         p_val = row[p_col] 
         
-        # SE (Standard Error) Tahmini
+        # SE (Standard Error) Estimation
         if 'se' in row:
             se = row['se']
         else:
-            # P-değerinden SE türetme (Non-parametrik durumlar için)
+            # SE derivation from P-value (for Non-parametric cases)
             if p_val >= 0.999: se = 0
             else:
                 z_score = norm.ppf(1 - p_val / 2)
                 se = abs(diff / z_score) if z_score != 0 else 0
 
-        # Güven Aralığı
+        # Confidence Interval
         ci_lower = diff - 1.96 * se
         ci_upper = diff + 1.96 * se
         
         is_significant = p_val < 0.05
         color = 'red' if is_significant else 'grey'
         
-        # Görselleştirme için metin
+        # Label for visualization
         comp_label = f"{m} vs {best_model}"
         
         plot_data.append({
@@ -114,7 +113,7 @@ def plot_simultaneous_ci(pairwise_df, metric_name="Score", higher_is_better=Fals
         print("Warning: No comparison data generated for plotting. (Are models named correctly?)")
         return
 
-    # DataFrame oluştururken kolonları elle belirtiyoruz (KeyError önlemi)
+    # When creating the DataFrame, we explicitly specify columns to prevent KeyErrors
     df_plot = pd.DataFrame(plot_data, columns=['Comparison', 'Mean Difference', 'Lower', 'Upper', 'Significant', 'Color'])
     
     plt.figure(figsize=(10, len(plot_data) * 0.8 + 2))
@@ -141,8 +140,7 @@ def plot_mcsim(pairwise_df, metric_name="Score"):
     Generates the Multiple Comparisons Similarity (MCSim) Plot (Figure 8).
     Heatmap of Mean Differences with stars for statistical significance.
     """
-    # 1. Pivot tablosu oluştur: Index=Model A, Columns=Model B, Values=Diff
-    # Önce tam bir matris oluşturmamız lazım
+
     models = sorted(list(set(pairwise_df['A']).union(set(pairwise_df['B']))))
     n = len(models)
     p_col = _get_p_col(pairwise_df.columns)
@@ -159,14 +157,14 @@ def plot_mcsim(pairwise_df, metric_name="Score"):
         diff = row['diff']
         p = row[p_col]
         
-        # Simetrik doldur
+
         diff_matrix.loc[m1, m2] = diff
-        diff_matrix.loc[m2, m1] = -diff # Fark tersine döner
+        diff_matrix.loc[m2, m1] = -diff 
         
         p_matrix.loc[m1, m2] = p
         p_matrix.loc[m2, m1] = p
 
-    # 2. Yıldızlar (*, **, ***)
+
     def get_star(p):
         if p < 0.001: return '***'
         elif p < 0.01: return '**'

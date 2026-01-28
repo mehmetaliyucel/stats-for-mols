@@ -35,26 +35,24 @@ def run_nonparametric_tests(df, model_col, score_col, subject_col='fold'):
     # posthoc_conover returns a P-value matrix.
     p_matrix = sp.posthoc_conover(df, val_col=score_col, group_col=model_col, p_adjust=sp_method)
     
-    # Matrisi Tukey tablosuna benzer "pairwise" formatına çevirelim ki görselleştirici (Module 3) tutarlı çalışsın.
-    # Bu dönüşüm görselleştirme kolaylığı içindir.
+
     pairwise_list = []
     models = p_matrix.columns.tolist()
     import itertools
     
-    # Meanleri hesapla (Effect size gösterimi için gerekli olacak)
+
     means = df.groupby(model_col)[score_col].mean()
     
     for m1, m2 in itertools.combinations(models, 2):
         p_val = p_matrix.loc[m1, m2]
         
-        # Pingouin pairwise_tukey formatına benzetiyoruz
         pairwise_list.append({
             'A': m1,
             'B': m2,
             'mean(A)': means[m1],
             'mean(B)': means[m2],
             'diff': means[m1] - means[m2],
-            'p-tukey': p_val, # İsim tutarlılığı için p-tukey ama aslında p-conover
+            'p-conover': p_val, 
             'test': 'Conover'
         })
         

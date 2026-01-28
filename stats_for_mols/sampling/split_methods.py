@@ -39,8 +39,8 @@ class DataSplitter:
                 else:
                     cv = RepeatedKFold(n_splits=n_splits,
                                     n_repeats=n_repeats,
-                                    random_state=self.random_state)
-                return cv.split(self.data, self.target)
+                                    random_state=self.random_state,)
+                yield from cv.split(self.data, self.target)
             elif method_name == 'single_split':
                 if self.task_type == "classification":
                     cv = StratifiedShuffleSplit(n_splits=n_splits,
@@ -50,7 +50,7 @@ class DataSplitter:
                     cv = ShuffleSplit(n_splits=n_splits,
                                     test_size=0.2,
                                     random_state=self.random_state)
-                return cv.split(self.data, self.target)
+                yield from cv.split(self.data, self.target)
             elif method_name == 'nested_cv':
                 if self.task_type == "classification":
                     outer_cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=self.random_state)
@@ -61,8 +61,8 @@ class DataSplitter:
                         train_val_target = self.target[train_val_idx]
 
 
-                    for train_idx, val_idx in inner_cv.split(train_val_data, train_val_target):
-                        yield (train_val_idx[train_idx], train_val_idx[val_idx], test_idx)
+                        for train_idx, val_idx in inner_cv.split(train_val_data, train_val_target):
+                            yield (train_val_idx[train_idx], train_val_idx[val_idx], test_idx)
                 else:
                     outer_cv = KFold(n_splits=n_splits, shuffle=True, random_state=self.random_state)
                     inner_cv = KFold(n_splits=n_splits, shuffle=True, random_state=self.random_state)
@@ -71,8 +71,8 @@ class DataSplitter:
                         train_val_data = self.data.iloc[train_val_idx]
 
 
-                    for train_idx, val_idx in inner_cv.split(train_val_data):
-                        yield (train_val_idx[train_idx], train_val_idx[val_idx], test_idx)
+                        for train_idx, val_idx in inner_cv.split(train_val_data):
+                            yield (train_val_idx[train_idx], train_val_idx[val_idx], test_idx)
             elif method_name == 'light_nested_cv':
                 if self.task_type ==  "classification":
                     train_test = RepeatedStratifiedKFold(n_splits=n_splits,
@@ -80,16 +80,16 @@ class DataSplitter:
                                                   random_state=self.random_state)
                     
 
-                    single = StratifiedShuffleSplit(n_splits=1, shuffle=True, random_state=self.random_state)
+                    single = StratifiedShuffleSplit(n_splits=1,  random_state=self.random_state, test_size=0.2)
 
-                for train_idx, test_idx in train_test.split(self.data, self.target):
-                    for train_idx_inner, val_idx_inner in single.split(self.data.iloc[train_idx], self.target[train_idx]):
-                        yield (train_idx[train_idx_inner], train_idx[val_idx_inner], test_idx)
+                    for train_idx, test_idx in train_test.split(self.data, self.target):
+                        for train_idx_inner, val_idx_inner in single.split(self.data.iloc[train_idx], self.target[train_idx]):
+                            yield (train_idx[train_idx_inner], train_idx[val_idx_inner], test_idx)
                 else:
                     train_test = RepeatedKFold(n_splits=n_splits,
                                             n_repeats=n_repeats,
                                             random_state=self.random_state)
-                    single = ShuffleSplit(n_splits=1, shuffle=True, random_state=self.random_state)
+                    single = ShuffleSplit(n_splits=1, random_state=self.random_state, test_size=0.2)
                     for train_idx, test_idx in train_test.split(self.data):
                         for train_idx_inner, val_idx_inner in single.split(self.data.iloc[train_idx]):
                             yield (train_idx[train_idx_inner], train_idx[val_idx_inner], test_idx)

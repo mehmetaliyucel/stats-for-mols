@@ -113,9 +113,7 @@ class MetricVisualizer:
         ax.set_title('Confusion Matrix')
         return ax
 
-    # ---------------------------------------------------------
-    # 3. RANKING & ENRICHMENT PLOTS (Drug Discovery Specific)
-    # ---------------------------------------------------------
+
     @staticmethod
     def plot_enrichment_curve(results_dict, ax=None):
         """

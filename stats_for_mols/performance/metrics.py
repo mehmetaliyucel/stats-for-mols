@@ -43,22 +43,19 @@ class MetricCalculator:
             "Kendall_Global": kendall_val
         }
 
-        # 3. Top-k Ranking Metrics (Listenin tepesindeki sıralama başarısı)
-        # Tahminlere göre sırala ve en yüksek skorlu %k'lık kısmı al
+
         df = pd.DataFrame({'y_true': y_true, 'y_pred': y_pred})
-        df_sorted = df.sort_values(by='y_pred', ascending=False) # Büyükten küçüğe
+        df_sorted = df.sort_values(by='y_pred', ascending=False) 
         n = len(df)
         
         for k in top_k_fractions:
             top_n = int(n * k)
             if top_n < 5: 
-                # Çok az veri varsa ranking metriği anlamsız olur
                 continue
                 
             subset = df_sorted.head(top_n)
             
-            # Bu alt küme içinde sıralama ne kadar doğru?
-            # Not: subset['y_pred'] zaten sıralı, ancak y_true'nun buna ne kadar uyduğunu ölçüyoruz.
+
             sp_k = spearmanr(subset['y_true'], subset['y_pred'])[0]
             kt_k = kendalltau(subset['y_true'], subset['y_pred'])[0]
             
