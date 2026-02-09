@@ -112,9 +112,11 @@ class MetricCalculator:
         '''
         Multiclass classification metrics,
         '''
+        from sklearn.preprocessing import label_binarize
         metrics = {}
         n_classes = y_proba.shape[1]
         y_pred = np.argmax(y_proba, axis=1)
+        y_true_bin = label_binarize(y_true, classes=np.arange(n_classes))
         try:
             metrics['MCC'] = matthews_corrcoef(y_true, y_pred)
             metrics['Accuracy'] = accuracy_score(y_true, y_pred)
@@ -123,12 +125,12 @@ class MetricCalculator:
             metrics['F1_Score_Weighted'] = f1_score(y_true, y_pred, average='weighted', zero_division=0)
             metrics['Precision_Macro'] = precision_score(y_true, y_pred, average='macro', zero_division=0)
             metrics['Recall_Macro'] = recall_score(y_true, y_pred, average='macro')
-            metrics['Presicion_Weighted'] = precision_score(y_true, y_pred, average='weighted', zero_division=0)
+            metrics['Precision_Weighted'] = precision_score(y_true, y_pred, average='weighted', zero_division=0)
             metrics['Recall_Weighted'] = recall_score(y_true, y_pred, average='weighted')
-            metrics['ROC_AUC_Macro'] = roc_auc_score(y_true, y_proba, multi_class='ovo', average='macro')
-            metrics['ROC_AUC_Weighted'] = roc_auc_score(y_true, y_proba, multi_class='ovo', average='weighted')
-            metrics['PR_AUC_Macro'] = average_precision_score(y_true, y_proba, average='macro')
-            metrics['PR_AUC_Weighted'] = average_precision_score(y_true, y_proba, average='weighted')
+            metrics['ROC_AUC_Macro'] = roc_auc_score(y_true_bin, y_proba, multi_class='ovo', average='macro')
+            metrics['ROC_AUC_Weighted'] = roc_auc_score(y_true_bin, y_proba, multi_class='ovo', average='weighted')
+            metrics['PR_AUC_Macro'] = average_precision_score(y_true_bin, y_proba, average='macro')
+            metrics['PR_AUC_Weighted'] = average_precision_score(y_true_bin, y_proba, average='weighted')
         except:
             print("Warning: Multiclass metric calculation failed.")
         return metrics
